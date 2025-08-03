@@ -1,0 +1,92 @@
+<div class="min-h-screen bg-gray-900 flex items-center justify-center p-4 transition-colors duration-300">
+  <div class="bg-gray-800 p-6 rounded-lg shadow-lg w-full max-w-lg text-gray-100">
+    <h1 class="text-2xl font-bold text-center mb-6">Calculadora de Impuestos Dominicanos</h1>
+    <form [formGroup]="taxForm" (ngSubmit)="calculateTax()" class="space-y-4">
+      <div>
+        <label for="taxType" class="block text-sm font-medium text-gray-300">Tipo de Cálculo</label>
+        <select id="taxType" formControlName="taxType" class="mt-1 block w-full rounded-md border-2 border-gray-600 bg-gray-700 text-gray-100 text-lg py-3 px-4 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-offset-2 leading-normal transition-colors" aria-describedby="taxTypeError" (change)="taxForm.get('iscType')?.setValue(''); taxForm.get('cost')?.setValue(null)">
+          <option value="" disabled>Seleccione un tipo</option>
+          <option value="ITBIS">ITBIS (18%)</option>
+          <option value="ISR">ISR (Renta)</option>
+          <option value="REGALIA">Regalía Pascual</option>
+          <option value="ISC">Impuesto Selectivo al Consumo</option>
+          <option value="DIVIDENDOS">Impuesto a los Dividendos</option>
+          <option value="CONSTITUCION">Impuesto a la Constitución de Empresas</option>
+          <option value="IPI">Impuesto al Patrimonio Inmobiliario (IPI)</option>
+          <option value="ACTIVOS">Impuesto a los Activos</option>
+          <option value="TRANSFERENCIAS">Impuesto a Transferencias Bancarias/Cheques</option>
+          <option value="PROPIEDADES">Impuesto a Transferencias de Propiedades</option>
+          <option value="SUCESIONES">Impuesto a las Sucesiones</option>
+          <option value="DONACIONES">Impuesto a las Donaciones</option>
+          <option value="GANANCIA_CAPITAL">Impuesto a la Ganancia de Capital</option>
+        </select>
+        @if (taxForm.get('taxType')?.invalid && taxForm.get('taxType')?.touched) {
+          <p id="taxTypeError" class="text-base text-red-400 bg-red-900/50 p-2 rounded mt-1 transition-opacity duration-300">Por favor, seleccione un tipo de cálculo.</p>
+        }
+      </div>
+      <div *ngIf="taxForm.get('taxType')?.value === 'ISC'">
+        <label for="iscType" class="block text-sm font-medium text-gray-300">Tipo de Bien/Servicio</label>
+        <select id="iscType" formControlName="iscType" class="mt-1 block w-full rounded-md border-2 border-gray-600 bg-gray-700 text-gray-100 text-lg py-3 px-4 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-offset-2 leading-normal transition-colors" aria-describedby="iscTypeError">
+          <option value="" disabled>Seleccione un tipo</option>
+          <option *ngFor="let type of iscTypes; trackBy: trackByValue" [value]="type.value">{{ type.label }}</option>
+        </select>
+        <p *ngIf="taxForm.get('iscType')?.invalid && taxForm.get('iscType')?.touched" id="iscTypeError" class="text-base text-red-400 bg-red-900/50 p-2 rounded mt-1 transition-opacity duration-300">Por favor, seleccione un tipo de bien o servicio.</p>
+      </div>
+      <div>
+        <label for="amount" class="block text-sm font-medium text-gray-300">
+          <span [ngSwitch]="taxForm.get('taxType')?.value">
+            <span *ngSwitchCase="'ISR'">Ingreso Anual (RD$)</span>
+            <span *ngSwitchCase="'REGALIA'">Salario Mensual (RD$)</span>
+            <span *ngSwitchCase="'CONSTITUCION'">Capital Social Autorizado (RD$)</span>
+            <span *ngSwitchCase="'IPI'">Valor del Patrimonio Inmobiliario (RD$)</span>
+            <span *ngSwitchCase="'DIVIDENDOS'">Monto de Dividendos (RD$)</span>
+            <span *ngSwitchCase="'ACTIVOS'">Valor Total de Activos (RD$)</span>
+            <span *ngSwitchCase="'TRANSFERENCIAS'">Monto de la Transferencia (RD$)</span>
+            <span *ngSwitchCase="'PROPIEDADES'">Valor de la Propiedad (RD$)</span>
+            <span *ngSwitchCase="'SUCESIONES'">Valor de la Herencia (RD$)</span>
+            <span *ngSwitchCase="'DONACIONES'">Valor de la Donación (RD$)</span>
+            <span *ngSwitchCase="'GANANCIA_CAPITAL'">Precio de Venta (RD$)</span>
+            <span *ngSwitchDefault>Monto (RD$)</span>
+          </span>
+        </label>
+        <input id="amount" type="number" formControlName="amount" class="mt-1 block w-full rounded-md border-2 border-gray-600 bg-gray-700 text-gray-100 text-lg py-3 px-4 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-offset-2 leading-normal transition-colors" placeholder="Ingrese el monto" min="0" aria-describedby="amountError"/>
+        <p *ngIf="taxForm.get('amount')?.invalid && taxForm.get('amount')?.touched" id="amountError" class="text-base text-red-400 bg-red-900/50 p-2 rounded mt-1 transition-opacity duration-300">
+          <span *ngIf="taxForm.get('amount')?.errors?.['required']">Por favor, ingrese un monto.</span>
+          <span *ngIf="taxForm.get('amount')?.errors?.['min']">El monto debe ser mayor o igual a 0.</span>
+        </p>
+      </div>
+      <div *ngIf="taxForm.get('taxType')?.value === 'GANANCIA_CAPITAL'">
+        <label for="cost" class="block text-sm font-medium text-gray-300">Costo de Adquisición (RD$)</label>
+        <input id="cost" type="number" formControlName="cost" class="mt-1 block w-full rounded-md border-2 border-gray-600 bg-gray-700 text-gray-100 text-lg py-3 px-4 shadow-sm focus:border-blue-500 focus:ring-4 focus:ring-blue-500 focus:ring-offset-2 leading-normal transition-colors" placeholder="Ingrese el costo de adquisición" min="0" aria-describedby="costError"/>
+        <p *ngIf="taxForm.get('cost')?.invalid && taxForm.get('cost')?.touched" id="costError" class="text-base text-red-400 bg-red-900/50 p-2 rounded mt-1 transition-opacity duration-300">
+          <span *ngIf="taxForm.get('cost')?.errors?.['required']">Por favor, ingrese el costo de adquisición.</span>
+          <span *ngIf="taxForm.get('cost')?.errors?.['min']">El costo debe ser mayor o igual a 0.</span>
+        </p>
+      </div>
+      <button type="submit" class="w-full bg-blue-600 text-white py-3 px-4 rounded-md hover:bg-blue-700 hover:scale-105 disabled:bg-gray-600 disabled:cursor-not-allowed text-lg transition-all duration-300" [disabled]="taxForm.invalid || (taxForm.get('taxType')?.value === 'ISC' && !taxForm.get('iscType')?.value) || (taxForm.get('taxType')?.value === 'GANANCIA_CAPITAL' && taxForm.get('cost')?.invalid)" [attr.aria-busy]="isLoading()" aria-label="Calcular">
+        @if (isLoading()) {
+          <span class="flex items-center justify-center">
+            <svg class="animate-spin h-5 w-5 mr-2 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+              <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+              <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+            </svg>
+            Calculando...
+          </span>
+        } @else {
+          <span>Calcular</span>
+        }
+      </button>
+    </form>
+    @if (hasResult()) {
+      <div class="mt-6 p-4 bg-gray-700 rounded-md border-2 border-blue-500 animate-pulse" aria-live="polite">
+        <h2 class="text-lg font-semibold text-gray-100">Resultado</h2>
+        <p class="text-base"><strong>Monto Base:</strong> RD$ {{ result()?.baseAmount | number:'1.2-2' }}</p>
+        <p class="text-base"><strong>Impuesto/Beneficio:</strong> RD$ {{ result()?.taxAmount | number:'1.2-2' }}</p>
+        <p class="text-base"><strong>Total:</strong> RD$ {{ result()?.totalAmount | number:'1.2-2' }}</p>
+        @if (result()?.message) {
+          <p class="text-base text-gray-300 mt-2">{{ result()?.message }}</p>
+        }
+      </div>
+    }
+  </div>
+</div>
